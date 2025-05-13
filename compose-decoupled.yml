@@ -165,10 +165,10 @@ services:
       MONGO_URL: mongodb://user:password@mongo.host:27017/huly
       STORAGE_PROVIDER_NAME: s3
       PORT: 8096
-      LIVEKIT_HOST: ws://huly-pwvi0u7o.livekit.cloud
-      LIVEKIT_URL: ws://huly-pwvi0u7o.livekit.cloud
-      LIVEKIT_API_KEY: APIZaDiW7dDXf7H
-      LIVEKIT_API_SECRET: JcrFvE0pSLY0nDJ6fpOKc0qlUEsWLhUfvWFa6rbIiB4
+      LIVEKIT_HOST: ws://
+      LIVEKIT_URL: ws://
+      LIVEKIT_API_KEY: 
+      LIVEKIT_API_SECRET: 
     restart: unless-stopped
     extra_hosts:
       s3.local: 192.168.0.1 #DNS resolution for compose network
