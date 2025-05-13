@@ -1,0 +1,198 @@
+name: Huly
+services:
+  nginx:
+    image: "nginx:1.21.3"
+    container_name: huly-nginx
+    ports:
+      3003:80
+    volumes:
+      - /path/to/nginx.conf:/etc/nginx/conf.d/default.conf #alter to point to appropriate file
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  rekoni:
+    image: hardcoreeng/rekoni-service:v0.6.499
+    container_name: huly-rekoni
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SECRET: replaceme #Pick something better than this please
+    deploy:
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  transactor:
+    image: hardcoreeng/transactor:v0.6.499
+    container_name: huly-transactor
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      AI_BOT_URL: http://aibot:4010
+      SERVER_PORT: 3333
+      SERVER_SECRET: replaceme
+      SERVER_CURSOR_MAXTIMEMS: 30000
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      MONGO_URL: mongodb://user:password@mongo.host:27017/huly
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      FRONT_URL: http://localhost:8087
+      ACCOUNTS_URL: http://account:3000
+      FULLTEXT_URL: http://fulltext:4700
+      STATS_URL: http://stats:4900
+      LAST_NAME_FIRST: true
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  collaborator:
+    image: hardcoreeng/collaborator:v0.6.499
+    container_name: huly-collaborator
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      COLLABORATOR_PORT: 3078
+      SECRET: replaceme
+      ACCOUNTS_URL: http://account:3000
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      STATS_URL: http://stats:4900
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  account:
+    image: hardcoreeng/account:v0.6.499
+    container_name: huly-account
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SERVER_PORT: 3000
+      SERVER_SECRET: replaceme
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      MONGO_URL: mongodb://user:password@mongo.host:27017/huly
+      TRANSACTOR_URL: ws://transactor:3333;ws://192.168.0.1:3003/_transactor
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      FRONT_URL: http://front:8080
+      STATS_URL: http://stats:4900
+      MODEL_ENABLED: "*"
+      ACCOUNTS_URL: http://localhost:3000
+      ACCOUNT_PORT: 3000
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  workspace:
+    image: hardcoreeng/workspace:v0.6.499
+    container_name: huly-workspace
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SERVER_SECRET: replaceme
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      MONGO_URL: mongodb://user:password@mongo.host:27017/huly
+      TRANSACTOR_URL: ws://transactor:3333;ws://192.168.0.1:3003/_transactor
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      MODEL_ENABLED: "*"
+      ACCOUNTS_URL: http://account:3000
+      STATS_URL: http://stats:4900
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  front:
+    image: hardcoreeng/front:v0.6.499
+    container_name: huly-front
+    environment:
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/s3.crt
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      LOVE_ENDPOINT: http://love:8096
+      LIVEKIT_WS: ws://huly-pwvi0u7o.livekit.cloud
+      AI_URL: http://aibot:4010
+      SERVER_PORT: 8080
+      TRUST_ALL_CERTIFICATES: true
+      SERVER_SECRET: replaceme
+      ACCOUNTS_URL: http://192.168.0.1:3003/_accounts
+      REKONI_URL: http://192.168.0.1:3003/_rekoni
+      CALENDAR_URL: http://192.168.0.1:3003/_calendar
+      GMAIL_URL: http://192.168.0.1:3003/_gmail
+      TELEGRAM_URL: http://192.168.0.1:3003/_telegram
+      STATS_URL: http://192.168.0.1:3003/_stats
+      UPLOAD_URL: /files
+      FILES_URL: https://s3.local:9999/huly/:workspace/:filename?file=:blobId&workspace=:workspace
+      ELASTIC_URL: https://elasticsearch.mgmt:9200
+      COLLABORATOR_URL: ws://192.168.0.1:3003/_collaborator
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      MINIO_ACCESS_KEY: yhOMiPfRqaoP42RwSili
+      MINIO_SECRET_KEY: AuwINGDH6KdLTPHWMIMpbcQwthFiF9KR
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      MONGO_URL: mongodb://user:password@mongo.host:27017/huly
+      TITLE: "Huly Wall-E"
+      DEFAULT_LANGUAGE: en
+      LAST_NAME_FIRST: true
+      DESKTOP_UPDATES_CHANNEL: selfhost
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+    volumes:
+      - /path/to/s3.crt:/usr/local/share/ca-certificates/s3.crt
+      - /path/to/root.crt:/usr/local/share/ca-certificates/root.crt
+      - /path/to/step.intermediate_ca.crt:/usr/local/share/ca-certificates/intermediate.crt
+  fulltext:
+    image: hardcoreeng/fulltext:v0.6.499
+    container_name: huly-fulltext
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SERVER_SECRET: replaceme
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      FULLTEXT_DB_URL: https://elasticsearch.mgmt:9200
+      ELASTIC_INDEX_NAME: huly_storage_index
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      REKONI_URL: http://rekoni:4004
+      ACCOUNTS_URL: http://account:3000
+      STATS_URL: http://stats:4900
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  stats:
+    image: hardcoreeng/stats:v0.6.499
+    container_name: huly-stats
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      PORT: 4900
+      SERVER_SECRET: replaceme
+    restart: unless-stopped
+  love:
+    image: hardcoreeng/love:v0.6.499
+    container_name: huly-love
+    ports:
+      - 8096:8096
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      SECRET: replaceme
+      ACCOUNTS_URL: http://account:3000
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      MONGO_URL: mongodb://user:password@mongo.host:27017/huly
+      STORAGE_PROVIDER_NAME: s3
+      PORT: 8096
+      LIVEKIT_HOST: ws://huly-pwvi0u7o.livekit.cloud
+      LIVEKIT_URL: ws://huly-pwvi0u7o.livekit.cloud
+      LIVEKIT_API_KEY: APIZaDiW7dDXf7H
+      LIVEKIT_API_SECRET: JcrFvE0pSLY0nDJ6fpOKc0qlUEsWLhUfvWFa6rbIiB4
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+  aibot:
+    image: hardcoreeng/ai-bot:v0.6.499
+    container_name: huly-aibot
+    ports:
+      - 192.168.0.1:4010:4010
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      STORAGE_CONFIG: minio|s3.local:9000/?accessKey=<CHANGEME>&secretKey=<CHANGEME>&rootBucket=huly&useSSL=true
+      SERVER_SECRET: secret
+      ACCOUNTS_URL: http://account:3000
+      DB_URL: mongodb://user:password@mongo.host:27017/huly
+      MONGO_URL: mongodb://user:password@mongo.host:27017/huly
+      STATS_URL: http://stats:4900
+      FIRST_NAME: Bot
+      LAST_NAME: Huly AI
+      PASSWORD: lm-studio
+      OPENAI_API_KEY: lm-studio
+      OPENAI_BASE_URL: http://172.21.255.251:1234/v1
+      LOVE_ENDPOINT: http://love:8096
+    restart: unless-stopped
+    extra_hosts:
+      s3.local: 192.168.0.1 #DNS resolution for compose network
+
+#This alternative configuration allows you to host your own minio/s3 and mongodb/postgres distinct from this deployment
